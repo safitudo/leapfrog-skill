@@ -43,6 +43,32 @@ When you encounter a LEAP project (has `master.md` at root):
 - **Tests are the authority.** If a test contradicts a prompt, the test wins.
 - **Start immediately** after reading all schemas and parts.
 
+## DO NOT CHEAT
+
+The whole point of LEAP is that AI generates code from prompts, schemas, and tests. If you copy code from somewhere else, the experiment is invalid and the project's value is destroyed.
+
+**Forbidden:**
+- ❌ Copying code from npm, PyPI, crates.io, or any package registry
+- ❌ Copying code from `_original/`, `_reference/`, or any other reference folder in the project
+- ❌ Reading the original/upstream source code of the project you're generating
+- ❌ Downloading the project as a reference (`npm pack`, `git clone` of the upstream, etc.)
+- ❌ Using `WebFetch` or `WebSearch` to look up the implementation
+- ❌ Asking another agent to write the code for you
+- ❌ "Porting" or "translating" existing code
+
+**Allowed inputs for generation:**
+- ✅ `master.md` (root and per-part)
+- ✅ `schemas/` (the contracts)
+- ✅ `tests/` (the guardrails)
+- ✅ Standard library / language documentation
+- ✅ Your own knowledge of how to implement things from scratch
+
+**Why this matters:** If you copy the reference, you've proven nothing — you've just laundered existing code through a prompt-shaped wrapper. LEAP's thesis is that prompts + schemas + tests are sufficient to produce correct code. Copying invalidates the experiment.
+
+**If a prompt is ambiguous:** Make your best guess from the tests. If tests don't disambiguate, ask the user. Never resolve ambiguity by reading the original source.
+
+**If `_original/` exists in the project:** It is the user's reference, NOT yours. Treat it as if it doesn't exist during generation. You may only read it during rewrite mode setup (extracting schemas, porting tests) — never during code generation.
+
 ## Project structure
 
 A LEAP project follows this structure:
