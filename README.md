@@ -15,8 +15,9 @@ An AI agent generates all application code on demand. The code is gitignored. Th
 
 ## Install (Claude Code)
 
-```
-/plugin install https://github.com/safitudo/leapfrog-skill
+```bash
+git clone https://github.com/safitudo/leapfrog-skill.git ~/.claude/plugins/leapfrog-skill
+claude --plugin-dir ~/.claude/plugins/leapfrog-skill
 ```
 
 Then in any LEAP project, say **"build the app, start from master.md, run the app when done"** and Claude builds everything, runs tests, and serves it.
