@@ -1,68 +1,42 @@
-# Leapfrog Skill — LEAP Pattern for AI Agents
+# leap-skill
 
-> **L**LM **E**ngineered **A**pplication **P**attern
+> Claude Code plugin for [LEAP](https://github.com/safitudo/leap) — LLM Engineered Application Pattern.
 
-A Claude Code skill (and universal agent manifest) for the LEAP philosophy: **code is a commodity, guardrails are the product.**
+A philosophy where **code is a commodity, guardrails are the product**. Apps are built from prompts, schemas, and tests. An AI agent generates all the code.
 
-## What is LEAP?
-
-Instead of writing code, you design applications as:
-- **Prompts** — declarative intent (what to build)
-- **Schemas** — contracts between parts (the architecture)
-- **Tests** — behavioral specifications (the definition of "correct")
-
-An AI agent generates all application code on demand. The code is gitignored. The prompts, schemas, and tests are the source of truth.
-
-## Install (Claude Code)
+## Install
 
 **Step 1:** Add the marketplace:
 ```
-/plugin marketplace add safitudo/leapfrog-skill
+/plugin marketplace add safitudo/leap-skill
 ```
 
 **Step 2:** Install the plugin:
 ```
-/plugin install leapfrog@leapfrog-skill
+/plugin install leap-skill@leap-skill
 ```
 
-Then in any LEAP project, say **"build the app, start from master.md, run the app when done"** and Claude builds everything, runs tests, and serves it.
+## Use
+
+In any LEAP project, say:
+
+> **"build the app, start from master.md, run the app when done"**
+
+Claude reads the prompts, schemas, and tests, generates all code into `src/`, runs the test suite, and serves the app.
+
+Or for converting an existing project to LEAP:
+
+> **"convert this project to LEAP format"**
+
+## Learn more
+
+- **[github.com/safitudo/leap](https://github.com/safitudo/leap)** — philosophy, spec, manifesto
+- **[semver-leap](https://github.com/safitudo/semver-leap)** — rewrite of npm's semver parser (5,632/5,632 tests passing)
+- **[todolist-leap](https://github.com/safitudo/todolist-leap)** — the original proof of concept
 
 ## Use with other agents
 
-The LEAP manifest is just markdown. Copy the contents of `skills/leap/SKILL.md` into your agent's system prompt, `agents.md`, or equivalent configuration. The pattern is agent-agnostic.
-
-### Cursor
-
-Add to `.cursorrules`:
-```
-[paste contents of skills/leap/SKILL.md]
-```
-
-### Windsurf
-
-Add to `.windsurfrules`:
-```
-[paste contents of skills/leap/SKILL.md]
-```
-
-### Any agent
-
-Inject into the system prompt or agent configuration file. The core contract:
-1. Read `master.md`
-2. Read schemas and parts
-3. Generate code into `src/`
-4. Run tests
-5. Fix until green
-
-## Example LEAP project
-
-See [todolist-leap-framework](https://github.com/safitudo/todolist-leap-framework) — a todo app with zero application code.
-
-## The Guardrails Hierarchy
-
-1. **Tests** — most valuable. Human-authored. The specification of correctness.
-2. **Schemas** — the architecture. Define how parts connect.
-3. **Prompts** — least valuable. Disposable. Any prompt that passes the tests is equally valid.
+The LEAP manifest is portable. Copy the contents of [`AGENTS.md`](https://github.com/safitudo/leap/blob/main/AGENTS.md) from the hub repo into any agent's config file (`.cursorrules`, `.windsurfrules`, system prompt, etc.).
 
 ## License
 
