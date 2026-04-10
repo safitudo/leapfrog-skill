@@ -1,6 +1,6 @@
 ---
 name: leap
-description: "LEAP: LLM Engineered Application Pattern. Use when the user says 'build the app', 'Read master.md', or when you find a master.md in the project root. Generates all code from prompts, runs tests, serves the app."
+description: "LEAP: LLM Engineered Application Pattern. Use when the user says 'build the app', 'Read master.md', 'rewrite this project', or when you find a master.md in the project root. Generates all code from prompts, runs tests, serves the app. Can also convert existing codebases into LEAP format."
 allowed-tools: Bash Read Write Edit Glob Grep
 argument-hint: "[master.md path]"
 ---
@@ -64,6 +64,62 @@ src/                # GITIGNORED — you generate this
 - If `src/` is empty — generate everything
 - If a specific part's prompt changed — regenerate that part only
 - After any generation — run all tests
+
+## Rewrite mode — converting existing projects to LEAP
+
+When the user asks to "rewrite" or "convert" an existing codebase into LEAP format:
+
+### Step 1: Analyze the existing project
+
+- Read the source code and understand the architecture
+- Identify the public API — every exported function, class, type, constant
+- Map the natural component boundaries (modules, classes, packages)
+- Read the existing test suite — understand what's already tested
+
+### Step 2: Extract schemas
+
+- Create `schemas/` with type definitions covering the full public API
+- Every function signature, every data type, every interface — extract it
+- These become the contracts. Be exhaustive. Missing a schema means missing a guardrail.
+
+### Step 3: Port tests
+
+- Copy or rewrite existing tests into `tests/`
+- Tests must be behavioral — test what the code does, not how it's structured
+- Remove any tests that depend on implementation details (private functions, internal state)
+- Add edge case tests you notice are missing in the original
+- **Tests are the most valuable artifact.** Spend the most time here.
+
+### Step 4: Decompose into parts
+
+- Create `parts/` with one folder per natural component
+- Each part gets a `master.md` prompt describing what that component does
+- Each part gets a `schema.ts` with its specific contract
+- Parts should be independent — no part's prompt should reference another part's implementation
+- Keep parts small enough that an AI can generate each one correctly in a single shot
+
+### Step 5: Write master.md
+
+- Create root `master.md` describing the project, its purpose, and how parts connect
+- Include tech constraints, generation rules, and verification steps
+- Reference the original project for context
+
+### Step 6: Verify the rewrite
+
+- Add `src/` to `.gitignore`
+- Delete or move aside the original source code
+- Generate fresh code from the prompts: read `master.md` and build
+- Run all ported tests
+- If tests fail — improve prompts, add missing schema details, iterate
+- Compare behavior against the original project
+
+### Rewrite rules
+
+- **Port tests first, write prompts second.** Tests anchor correctness; prompts are iterable.
+- **Don't simplify the API.** The rewrite must be a drop-in replacement. Same public interface.
+- **Don't skip edge cases.** If the original handles it, your tests must cover it.
+- **Schemas must be complete.** Every public type, every exported symbol.
+- **Keep the original's test cases.** They encode years of bug discoveries. Each test exists because something broke once.
 
 ## For other AI agents
 
