@@ -1,0 +1,19 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "leapfrog-skill",
+  "description": "LEAP: LLM Engineered Application Pattern. Code is a commodity, guardrails are the product.",
+  "owner": {
+    "name": "safitudo"
+  },
+  "plugins": [
+    {
+      "name": "leapfrog",
+      "description": "LEAP skill — generates apps from prompts, schemas, and tests. No application code committed.",
+      "category": "development",
+      "source": {
+        "source": "local",
+        "path": "plugins/leapfrog"
+      }
+    }
+  ]
+}
