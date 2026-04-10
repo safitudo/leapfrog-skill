@@ -10,10 +10,7 @@
       "name": "leapfrog",
       "description": "LEAP skill — generates apps from prompts, schemas, and tests. No application code committed.",
       "category": "development",
-      "source": {
-        "source": "local",
-        "path": "plugins/leapfrog"
-      }
+      "source": "./plugins/leapfrog"
     }
   ]
 }
