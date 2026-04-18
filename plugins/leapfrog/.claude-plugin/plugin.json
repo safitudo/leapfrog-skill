@@ -1,7 +1,7 @@
 {
   "name": "leapfrog-skill",
   "description": "LEAP: LLM Engineered Application Pattern. A philosophy where code is a commodity — only prompts, schemas, and tests are source of truth. AI generates all application code on demand.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": {
     "name": "safitudo"
   },

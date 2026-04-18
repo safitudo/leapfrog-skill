@@ -91,6 +91,46 @@ src/                # GITIGNORED — you generate this
 - If a specific part's prompt changed — regenerate that part only
 - After any generation — run all tests
 
+## Spec authoring
+
+Before writing any spec file, open `master.md` (or `spec/overview.spec.md` for multi-surface targets) with three required sections:
+
+- **Binding source** — what this spec is being written *against*. Options: manpage, observed runtime behavior, ARIA pattern + explicit axis picks, reference tool output, user's mental model. Declare it in one line per source.
+- **Design picks** — the axes where the external contract is multi-valued, and which value you chose. "Follow WAI-ARIA Combobox pattern" is vacuous; "autocomplete=list, selection-follows-focus=true, focus=aria-activedescendant" is a contract.
+- **Out of scope** — explicit exclusions. This cuts ~80% of downstream ambiguity.
+
+**External contracts are not specs.** Manpages understate reality. Reference tools behave wrong-by-design (Apple Calculator chains `2 + 3 × 4 = 20`). ARIA patterns admit multiple orthogonal variants. Spec must encode what the *artifact* does, not what the docs claim.
+
+### Engine spec vs platform-adapter spec
+
+For any multi-surface or platform-specific target:
+
+- `spec/engine/` — pure. No platform vocabulary. The algorithm, the state machine, the contract.
+- `spec/platform/<target>/` — allowed to name platform types (SwiftUI, DOM, ANSI, `clap`). Thin adapter to the engine.
+
+The engine is testable without the platform. Any value that is a *function of engine state* belongs in the engine, not the view/adapter. View looks up; view does not compute.
+
+### Schemas are refined types
+
+A `string` type is rarely enough. A combobox `id` must be CSS-selector-safe (`:r1:` is a valid HTML id but breaks selectors). A path must be canonical. Declare refinements — branded types in TS, enums and structs in Swift/Rust, validators in Python.
+
+## Tests are spec-discovery, not just spec-verification
+
+On unfamiliar terrain, first-draft specs are wrong. Tests routinely force the spec to be rewritten, not just the code. This is *correct LEAP behavior*, not a process violation.
+
+The commit sequence `spec → tests → spec' → src` is expected. If tests fail because the spec is wrong, fix the spec first, then regenerate code. If tests fail because the code is wrong, fix the code. Never silence a test to make code pass.
+
+**Test-artifact class is part of the spec.** Declare the class, pin the tooling:
+
+| Surface | Required test class | Notes |
+|---|---|---|
+| Web | Playwright e2e + axe-core a11y + visual regression | pin browser version |
+| Native (macOS/iOS) | Accessibility-tree snapshot | pixel snapshots are fragile on SwiftUI; prefer structural |
+| TUI | PTY-based snapshot | stream mocks silently pass real bugs |
+| CLI | Byte-exact golden diff + checked-in regenerator script | pin reference tool version |
+
+"No test-artifact class declared" = not LEAP-compliant.
+
 ## Rewrite mode — converting existing projects to LEAP
 
 When the user asks to "rewrite" or "convert" an existing codebase into LEAP format:
@@ -147,48 +187,73 @@ When the user asks to "rewrite" or "convert" an existing codebase into LEAP form
 - **Schemas must be complete.** Every public type, every exported symbol.
 - **Keep the original's test cases.** They encode years of bug discoveries. Each test exists because something broke once.
 
-## UI / frontend projects
+## UI projects — web, native, TUI, CLI
 
-If the project has a `design/` directory at the root, it is a LEAP UI project. Different rules apply:
+All UI surfaces follow the general spec-authoring rules above: engine/platform split, test-artifact class declared, refined schemas, derived values in the engine (not the view). Surface-specific rules follow.
 
-### `design/` is the visual source of truth
+### Web
 
-- `design/tokens.json` — design system (colors, spacing, typography). Consume these in your generated code.
-- `design/references/` — reference images. These are test fixtures, not documentation.
+Web projects have a `design/` directory at the root.
+
+- `design/tokens.json` — design system (colors, spacing, typography). Consume these.
+- `design/references/` — reference images. Test fixtures, not documentation.
 - `design/figma.json` — optional Figma export for traceability.
 
-### Test types for UI
+Web test types (all must pass):
 
-UI projects have three test categories. Make all of them pass.
+1. **`tests/visual/`** — pixel-diff tests against reference images. Primary correctness signal.
+2. **`tests/interaction/`** — Playwright behavior (click, hover, type, focus).
+3. **`tests/a11y/`** — axe-core + keyboard nav + screen reader compliance.
 
-1. **`tests/visual/`** — pixel-diff tests against reference images. The primary correctness signal.
-2. **`tests/interaction/`** — behavior when users click, hover, type, focus.
-3. **`tests/a11y/`** — accessibility compliance (WCAG, keyboard nav, screen readers).
+Banned patterns (web):
 
-### Banned patterns for UI
-
-Never write or accept these in a UI LEAP project:
-
-- ❌ **DOM snapshot tests** — they lock implementation, forbid regeneration
-- ❌ **Class name assertions** — they couple tests to a specific CSS approach
+- ❌ **DOM snapshot tests** — lock implementation, forbid regeneration
+- ❌ **Class name assertions** — couple tests to a specific CSS approach
 - ❌ **Rendered HTML string comparisons** — same problem
-- ❌ **Tests that check framework-specific internals** (e.g., "is this a React.forwardRef")
+- ❌ **Tests that check framework-specific internals** (e.g., "is this a `React.forwardRef`")
 
-If you encounter these in a project, flag them to the user as LEAP anti-patterns.
+When generating web code:
 
-### When generating UI code
+- Free to choose any framework, CSS approach, or DOM structure UNLESS `master.md` constrains you
+- Consume `design/tokens.json` — do not hardcode colors, spacing, fonts
+- Match rendered output to `design/references/*.png` — visual tests verify this
+- Use `maxDiffPixelRatio` (typical: 0.01), not exact pixel matches
+- Pin browser version in CI to eliminate cross-browser drift
+- Never mock the browser for visual tests — real headless browser only
 
-- You are free to choose any framework, CSS approach, or DOM structure UNLESS `master.md` constrains you
-- Consume `design/tokens.json` — do not hardcode colors, spacing, or fonts
-- Match the rendered output to `design/references/*.png` — the visual tests will verify this
-- Iterate on failing visual tests: render the component, check the diff, adjust
-- Do not mock the browser for visual tests — they must run in a real headless browser
+### Native (macOS / iOS)
 
-### Pixel diffing
+- Engine (Core) library must be pure — no UI dependency. Unit-testable in isolation.
+- UI layer (SwiftUI / AppKit) adapts the engine; does not duplicate logic.
+- Prefer **accessibility-tree snapshots** over pixel snapshots — pixel tooling is fragile on SwiftUI, and XCTest itself can fail to load on fresh macOS + Xcode combinations. Document a fallback test runner (plain executable wrapping identical assertions) when XCTest is broken.
+- Keyboard shortcuts belong in the *platform-adapter* spec — iOS/visionOS have no keyboard, cross-target portability is not free.
 
-- Use `maxDiffPixelRatio` thresholds, not exact pixel matches (accounts for font rendering)
-- Typical threshold: 0.01 (1% of pixels may differ)
-- Pin the browser version in CI to eliminate cross-browser drift
+Banned patterns (native):
+
+- ❌ **Derived display values computed in `@State`** — rebadging, formatting, filtering live in Core
+- ❌ **Pixel snapshots as the primary contract** — use accessibility-tree / structural-view snapshots
+- ❌ **`@main` App struct holding business logic** — `App` is adapter; logic is in Core
+
+### TUI (interactive terminal)
+
+- **Keyboard decode table is the load-bearing schema.** Escape-sequences → logical-key mapping lives in `schema/keymap.schema.*` or `spec/keyboard.spec.md`. First-class artifact, not buried in code.
+- **Render at the frame level, not per-widget.** One `render-loop.spec.md` + `render-frame.schema.*` (frame = lines + final flag) collapses per-widget render pipelines into one.
+- **PTY-based testing is non-negotiable.** Stream-mocking stdin/stdout silently passes raw-mode, cursor-escape, and SIGINT bugs. Use `node-pty` (via `@homebridge/node-pty-prebuilt-multiarch` on Node 22 + darwin-arm64) or the equivalent in your runtime.
+- **Respect `NO_COLOR`** — disable styling but keep terminal control codes. They are different things.
+- **SIGINT handling is part of the spec.** Cursor restore, terminal mode restore, exit code 130. Not optional.
+
+### CLI (stream-only, non-interactive)
+
+- **Schema-first, not framework-derived.** Hand-author the args struct with invariants + docstrings. The arg-parsing framework (`clap`, `argparse`, `commander`) is a disposable adapter. Otherwise the framework IS the spec and the schema drifts silently.
+- **Golden-file byte-exact diff** is the test class when reproducing a reference tool. Text-level assertions pass through invisible character differences (NBSP indent in `tree(1)`'s output is a classic).
+- **Manpage ≠ reality.** Spec must be written against observed behavior of the reference binary, not its documentation. Include a checked-in `gen-golden.sh` that regenerates fixtures from the reference tool at a pinned version.
+- **Stdout is output; stderr is errors; exit code is contract.** All three are part of the spec.
+
+Banned patterns (CLI):
+
+- ❌ **Framework-derived args schema** — makes the framework the spec
+- ❌ **Text-level output assertions when byte-exact is required** — invisible characters pass through
+- ❌ **Tests that shell out without pinning the reference tool version**
 
 ## For other AI agents
 
