@@ -17,7 +17,7 @@ A philosophy where **code is a commodity, guardrails are the product**. Apps are
 
 **Step 2:** Install the plugin:
 ```
-/plugin install leap-skill@leap-skill
+/plugin install leapfrog-skill@leapfrog-skill
 ```
 
 ## Use
