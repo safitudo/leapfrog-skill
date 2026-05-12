@@ -6,6 +6,10 @@ A philosophy where **code is a commodity, guardrails are the product**. Apps are
 
 ## Install
 
+> **Requires Claude Code CLI.** The VS Code extension does not yet support `/plugin` commands directly.
+>
+> **In VS Code:** open the integrated terminal (`Terminal → New Terminal`), run `claude`, then run the install commands in that session.
+
 **Step 1:** Add the marketplace:
 ```
 /plugin marketplace add safitudo/leap-skill
